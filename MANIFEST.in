@@ -1,0 +1,4 @@
+recursive-include getprox *.py
+include *.py
+include *.rst
+exclude MANIFEST.in
