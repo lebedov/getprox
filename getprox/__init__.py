@@ -10,12 +10,82 @@ import base64
 import codecs
 import re
 
+from gevent import monkey
+monkey.patch_all()
+
+import gevent
 import lxml.html
 import requests
 
+def isalive(uri, timeout=1.0):
+    """
+    Check whether a proxy is alive.
+
+    Parameters
+    ----------
+    uri : str
+        Proxy URI.
+    timeout : float
+        Test timeout.
+
+    Returns
+    -------
+    result : bool
+        True if the proxy seems to be alive.
+    """
+
+    assert re.search('^http://\d+\.\d+\.\d+\.\d+:\d+$', uri)                     
+    try:
+        requests.get('http://www.google.com',
+                     proxies={'http': uri},
+                     timeout=timeout)
+    except:
+        return False
+    else:
+        return True
+
+def filter_alive(uri_list, timeout=1.0):
+    """
+    Find proxies in a list that are alive.
+
+    Parameters
+    ----------
+    uri_list : list
+        Proxy URIs.
+    timeout : float
+        Proxy timeout.
+
+    Returns
+    -------
+    results : list
+        List of proxies that seem to be alive.
+    """
+
+    jobs = [gevent.spawn(isalive, uri, timeout=timeout) for uri in uri_list]
+    gevent.joinall(jobs)
+    results = []
+    for (j, uri) in zip(jobs, uri_list):
+        if j.value:
+            results.append(uri)
+    return results
+
+def _get_freeproxylist():
+    """
+    http://freeproxylist.co
+    """
+
+    # Get URI of most recent list:
+    page = requests.get('http://freeproxylist.co')
+    tree = lxml.html.fromstring(page.text)
+    uri = tree.xpath('.//div[@class="entry_date"]')[0].xpath('.//a/@href')[0]
+    page = requests.get(uri)
+    tree = lxml.html.fromstring(page.text)
+    data = tree.xpath('.//div[@class="entry_content"]')[0].text_content().strip()
+    return ['http://'+u for u in data.split('\n')]
+
 def _get_proxy_ip_list():
     """
-    http://proxy-ip-list.com.
+    http://proxy-ip-list.com
     """
 
     # This page lists proxies that were ostensibly checked within the past hour:
@@ -24,14 +94,15 @@ def _get_proxy_ip_list():
 
     results = []
     for tr in tree.findall('.//tbody/tr'):
-        addr, response, speed, proxy_type, country = map(lambda x: x.text, tr.findall('.//td'))
+        addr, response, speed, proxy_type, country = \
+            map(lambda x: x.text, tr.findall('.//td'))
         if response != '0' and speed != '0' and proxy_type == 'high-anonymous':
             results.append('http://'+addr)
     return results
 
 def _get_aliveproxy():
     """
-    http://aliveproxy.com.
+    http://aliveproxy.com
     """
 
     page = requests.get("http://aliveproxy.com/high-anonymity-proxy-list/")
@@ -39,7 +110,8 @@ def _get_aliveproxy():
 
     results = []
     for tr in tree.findall(".//tr[@class='cw-list']"):
-        addr, _, _, _, last_check, _, _, _, _, _ = map(lambda x: x.text, tr.findall('.//td'))
+        addr, _, _, _, last_check, _, _, _, _, _ = \
+            map(lambda x: x.text, tr.findall('.//td'))
         addr = re.search('(\d+\.\d+\.\d+\.\d+\:\d+)', addr).group(1)
         temp = re.search('(\d+)\:(\d+)', last_check)
         last_check = int(temp.group(1))*60+int(temp.group(2))
@@ -82,7 +154,8 @@ def _get_cool_proxy():
     return results
 
 # Proxy sources:
-_proxy_sources = {'proxy-ip-list.com': _get_proxy_ip_list,
+_proxy_sources = {'freeproxylist.co': _get_freeproxylist,
+                  'proxy-ip-list.com': _get_proxy_ip_list,
                   'aliveproxy.com': _get_aliveproxy,
                   'cool-proxy.net': _get_cool_proxy}
 
