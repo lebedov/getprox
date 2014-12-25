@@ -45,7 +45,7 @@ if __name__ == "__main__":
         long_description = LONG_DESCRIPTION,
         url = URL,
         packages = PACKAGES,
-        install_requires = ['gevent', 
-                            'lxml',
-                            'requests'],
+        install_requires = ['lxml',
+                            'requests',
+                            'requests-futures'],
         )
