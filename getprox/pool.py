@@ -4,10 +4,9 @@
 Proxy pool.
 """
 
-
-import threading as th
 import Queue
 
+import futures
 import requests
 import requests_futures.sessions
 
@@ -21,25 +20,24 @@ class ProxyPool(object):
         self.q_untested = Queue.Queue()
         self.q_tested = Queue.Queue()
 
-        if sources:
-            t = th.Thread(target=self._get_proxies, args=tuple(sources))
+        if not sources:
+            sources = getters.__all__
+        self.ex = futures.ThreadPoolExecutor(len(sources))
+        for g in sources:
+            self.ex.submit(self._get_proxies, g)
+    
+    def _get_proxies(self, getter):
+        try:
+            uri_list = getattr(getters, getter)()
+        except:
+            return
         else:
-            t = th.Thread(target=self._get_proxies, args=tuple(getters.__all__))
-        t.start()
+            for uri in uri_list:
+                self.q_untested.put(uri)
 
-    def _get_proxies(self, *g):
-        for getter in g:
-            try:
-                uri_list = getattr(getters, getter)()
-            except:
-                continue
-            else:
-                for uri in uri_list:
-                    self.q_untested.put(uri)
-
-                uri_tested_list = self.tester.test(*uri_list)
-                for uri in uri_tested_list:
-                    self.q_tested.put(uri)
+            uri_tested_list = self.tester.test(*uri_list)
+            for uri in uri_tested_list:
+                self.q_tested.put(uri)
 
     def get(self, n=1, tested=False):
         """

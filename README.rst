@@ -28,7 +28,7 @@ A list of currently supported proxy sources can be obtained via ::
 
 Proxies may also be obtained from a single source: ::
 
-    proxy_uri_list = getprox.get_proxies('aliveproxy.com')
+    proxy_uri_list = getprox.get_proxies('letushide')
 
 Development
 -----------

@@ -45,7 +45,8 @@ if __name__ == "__main__":
         long_description = LONG_DESCRIPTION,
         url = URL,
         packages = PACKAGES,
-        install_requires = ['lxml',
+        install_requires = ['futures',
+                            'lxml',
                             'requests',
                             'requests-futures'],
         )
