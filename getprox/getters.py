@@ -12,10 +12,50 @@ import lxml.html
 import requests
 
 # Only retrieval functions should be listed in __all__:
-__all__ = ['freeproxylist',
+__all__ = ['letushide',
+           'freeproxylist',
            'proxy_ip_list',
            'aliveproxy',
            'cool_proxy']
+
+def letushide():
+    """
+    http://letushide.com
+    """
+
+    results = []
+    for i in xrange(1, 20):
+        uri = \
+              'http://letushide.com/filter/http,all,all/%s/list_of_free_HTTP_proxy_servers' % i
+
+        # Downloading of some of the pages may eventually fail:
+        try:
+            page = requests.get(uri)
+        except:
+            break
+
+        tree = lxml.html.fromstring(page.text)
+        for tr in tree.xpath('.//tr[@id="data"]'):
+            td_list = tr.xpath('.//td')
+            host = td_list[1].text_content()
+            port = td_list[2].text_content()
+            s = td_list[5].xpath('.//@class')[0]
+            if len(s) == 2:
+                speed = int(s[1])
+            else:
+                speed = 0
+            reliability = int(td_list[6].text_content()[:-1])
+
+            # Only save those proxies with a speed of at least 4 and a
+            # reliability greater than 90:
+            if speed >= 4 and reliability >= 90:
+                results.append('http://%s:%s' % (host, port))
+
+        # Leave loop if there isn't any link to the next page present:
+        if not tree.xpath('.//a[contains(@href,"/filter/http,all,all/%s/list_of_free_HTTP_proxy_servers")]' % (i+1)):
+            break
+
+    return results
 
 def freeproxylist():
     """
