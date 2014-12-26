@@ -12,6 +12,7 @@ Python library for retrieving free HTTP proxies from online sources.
 from .version import __version__
 
 import getters
+from pg import ProxyGet
 
 def current_sources():
     """

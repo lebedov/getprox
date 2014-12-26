@@ -28,10 +28,10 @@ class ProxyTest(object):
         self.session = \
             requests_futures.sessions.FuturesSession(max_workers=max_workers)
         self.timeout = timeout
-
+        self.temp = []
     def _get_result(self, r):
         try:
-            r.result(timeout=self.timeout)
+            r.result()
         except:
             return False
         else:
@@ -53,7 +53,9 @@ class ProxyTest(object):
         """
 
         r_list = map(lambda p: self.session.get('http://www.google.com',
-                                           proxies={'http': p}), uris)
+                                                proxies={'http': p},
+                                                timeout=self.timeout), uris)
+        self.temp.extend(r_list)
         results = []
         for r, uri in zip(r_list, uris):
             if self._get_result(r):
