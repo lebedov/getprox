@@ -12,11 +12,29 @@ import lxml.html
 import requests
 
 # Only retrieval functions should be listed in __all__:
-__all__ = ['letushide',
+__all__ = ['checkerproxy',
+           'letushide',
            'freeproxylist',
            'proxy_ip_list',
            'aliveproxy',
            'cool_proxy']
+
+def checkerproxy():
+    """
+    http://checkerproxy.net
+    """
+
+    page = requests.get('http://checkerproxy.net/all_proxy')
+    tree = lxml.html.fromstring(page.text)
+
+    results = []
+    for tr in tree.xpath('.//table[@id="result-box-table"]/tbody/tr'):
+        td_list = tr.xpath('.//td')
+        ipport = td_list[1].text
+        proxytype = td_list[3].text
+        if proxytype == 'HTTP':
+            results.append('http://'+ipport)
+    return results
 
 def letushide():
     """
