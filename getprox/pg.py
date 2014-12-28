@@ -38,10 +38,10 @@ class ProxyGet(object):
     @property
     def running_getters(self):
         """
-        Return True if the proxy getters are still running.
+        Return True if any of the proxy getters are still running.
         """
 
-        return all([e.running() for e in self._executing_getters])
+        return any([e.running() for e in self._executing_getters])
 
     def _get_proxies(self, getter):
         try:
