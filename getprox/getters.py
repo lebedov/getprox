@@ -2,6 +2,11 @@
 
 """
 Proxy retrieval functions.
+
+Notes
+-----
+All retrieval functions must be listed in `__all__` in order to be exposed to
+the rest of the package.
 """
 
 import base64
@@ -11,7 +16,6 @@ import re
 import lxml.html
 import requests
 
-# Only retrieval functions should be listed in __all__:
 __all__ = ['checkerproxy',
            'letushide',
            'freeproxylist',
@@ -19,9 +23,25 @@ __all__ = ['checkerproxy',
            'aliveproxy',
            'cool_proxy']
 
+# Proxy sources that can't be easily accessed:
+# http://www.freeproxylists.com - uses captcha
+
+#def gatherproxy():
+#    """
+#    http://gatherproxy.com
+#    """
+#
+#    page = requests.post('http://gatherproxy.com/proxylist/anonymity/?t=Elite',
+#                         data={'Type':'elite','PageIdx':"1"})
+
 def checkerproxy():
     """
     http://checkerproxy.net
+
+    Notes
+    -----
+    As of 12/2014, ostensibly lists checked proxies but doesn't include any timing
+    information in the list.
     """
 
     page = requests.get('http://checkerproxy.net/all_proxy')
@@ -39,6 +59,10 @@ def checkerproxy():
 def letushide():
     """
     http://letushide.com
+
+    Notes
+    -----
+    As of 12/2014, lists speed, reliability, and last time checked.
     """
 
     results = []
@@ -78,6 +102,11 @@ def letushide():
 def freeproxylist():
     """
     http://freeproxylist.co
+
+    Notes
+    -----
+    As of 12/2014, does not list any information regarding proxy reliability or
+    check status.
     """
 
     # Get URI of most recent list:
@@ -92,6 +121,10 @@ def freeproxylist():
 def proxy_ip_list():
     """
     http://proxy-ip-list.com
+
+    Notes
+    -----
+    As of 12/2014, lists proxy response time and server speed.
     """
 
     # This page lists proxies that were ostensibly checked within the past hour:
@@ -109,6 +142,10 @@ def proxy_ip_list():
 def aliveproxy():
     """
     http://aliveproxy.com
+
+    Notes
+    -----
+    As of 12/2014, lists uptime, response time, and last good check time.
     """
 
     page = requests.get("http://aliveproxy.com/high-anonymity-proxy-list/")
@@ -130,6 +167,11 @@ def aliveproxy():
 def cool_proxy():
     """
     http://www.cool-proxy.net
+
+    Notes
+    -----
+    As of 12/2014, lists rating, working status, response time, download speed,
+    and time since last check.
     """
 
     # Only look at first 5 pages of proxies:
@@ -150,9 +192,12 @@ def cool_proxy():
             response_time = td_list[7].text_content()
             speed = td_list[8].text_content()
             last_check = td_list[9].text_content()
-            
+
             # Convert to seconds:
             last_check = int(last_check[0:2])*60+int(last_check[3:5])
+
+            # Only return highest rating, working >= 90%, response time within 2
+            # s, speed higher than 100 kb/s, and last check within 10 minutes:
             if rating == '5 star proxy' and float(working) >= 90 and \
                float(response_time) <= 2.0 and \
                float(speed) >= 100 and last_check < 600:
