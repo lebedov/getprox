@@ -15,7 +15,23 @@ import proxytest
 import getters
 
 class ProxyGet(object):
-    def __init__(self, *sources):
+    """
+    Proxy retrieval class.
+
+    Parameters
+    ----------
+    sources : list of str
+        Proxy sources. If None, proxies from all available sources are
+        retrieved.
+    test : bool
+        If True, test retrieved proxies.
+    """
+
+    def __init__(self, *sources, **kwargs):
+        if kwargs.has_key('test'):
+            self.test = kwargs['test']
+        else:
+            self.test = False
         self.q_untested = Queue.Queue()
         self.q_tested = Queue.Queue()
 
@@ -43,6 +59,14 @@ class ProxyGet(object):
 
         return any([e.running() for e in self._executing_getters])
 
+    def wait(self):
+        """
+        Wait until all proxy retrieval/collection threads finish running.
+        """
+
+        futures.wait(self._executing_getters, return_when=futures.ALL_COMPLETED)
+        futures.wait(self._executing_queues, return_when=futures.ALL_COMPLETED)
+
     def _get_proxies(self, getter):
         try:
             uri_list = getattr(getters, getter)()
@@ -52,9 +76,10 @@ class ProxyGet(object):
             for uri in uri_list:
                 self.q_untested.put(uri)
 
-            uri_tested_list = self.tester.test(*uri_list)
-            for uri in uri_tested_list:
-                self.q_tested.put(uri)
+            if self.test:
+                uri_tested_list = self.tester.test(*uri_list)
+                for uri in uri_tested_list:
+                    self.q_tested.put(uri)
 
     def _get_from_queues(self):
 
@@ -62,14 +87,21 @@ class ProxyGet(object):
         while True:
             if not self.running_getters:
                 break
-        while not self.q_untested.empty():
-            self.proxies_untested.append(self.q_untested.get())
-            self.q_untested.task_done()
-        while not self.q_tested.empty():
-            self.proxies_tested.append(self.q_tested.get())
-            self.q_tested.task_done()
 
-    def get(self, n=None, tested=False):
+        # Discard duplicates when saving results:
+        tmp = set()
+        while not self.q_untested.empty():
+            tmp.add(self.q_untested.get())
+            self.q_untested.task_done()
+        self.proxies_untested = list(tmp)
+        if self.test:
+            tmp = set()
+            while not self.q_tested.empty():
+                tmp.add(self.q_tested.get())
+                self.q_tested.task_done()
+            self.proxies_tested = list(tmp)
+
+    def get(self, n=None, test=False):
         """
         Return retrieved proxies.
 
@@ -79,8 +111,10 @@ class ProxyGet(object):
             Maximum number of proxies to retrieve. If not specified, all
             available proxies are returned. The total number returned may
             be less than this number.
-        tested : bool
-            If True, return tested proxy URIs; otherwise, return untested URIs.
+        test : bool
+            If True, return tested proxy URIs; if False, return untested URIs.
+            Raises an exception of the class was not instantiated with the
+            `test` argument set.
 
         Returns
         -------
@@ -93,7 +127,9 @@ class ProxyGet(object):
         else:
             assert isinstance(n, numbers.Integral)
             s = slice(None, n, None)
-        if tested:
+        if test:
+            if not self.test:
+                raise ValueError('class instance not configured to test proxies')
             return self.proxies_tested[:n]
         else:
             return self.proxies_untested[:n]

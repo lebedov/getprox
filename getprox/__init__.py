@@ -21,15 +21,21 @@ def current_sources():
 
     return getters.__all__
 
-def get_proxies(src=None):
+def proxy_get(*sources, **kwargs):
     """
     Retrieve HTTP proxies from free online lists.
 
     Parameters
     ----------
-    src : str or list of str
+    sources : list of str
         Proxy sources. If None, proxies from all available sources are retrieved.
-        If a list, proxies from each of the specified sources are retrieved.
+    n : int
+        Maximum number of proxies to retrieve. If None (default), all
+        available proxies are returned. The total number returned may
+        be less than this number.
+    test : bool
+        If True, return tested proxy URIs; if False (default), 
+        return URIs without testing.
 
     Returns
     -------
@@ -37,27 +43,15 @@ def get_proxies(src=None):
         List of proxy URIs in http://host:port format.
     """
 
-    def exec_getter(k):
-        try:
-            r = getattr(getters, k)()
-        except:
-            return []
-        else:
-            return r
-
-    results = []
-    if src is None:
-        for k in getters.__all__:
-            results.extend(exec_getter(k))
-    elif isinstance(src, basestring):
-        results.extend(exec_getter(src))
+    if kwargs.has_key('n'):
+        n = kwargs['n']
     else:
-        try:
-            i = iter(src)
-        except:
-            raise ValueError('invalid proxy source')
-        else:
-            for k in i:
-                results.extend(exec_getter(k))
-    return results
+        n = None
+    if kwargs.has_key('test'):
+        test = kwargs['test']
+    else:
+        test = False
+    p = ProxyGet(*sources, **kwargs)
+    p.wait()
+    return p.get(n, test)
 
