@@ -38,9 +38,9 @@ one can also access the asynchronous mechanism as follows: ::
     # .. wait for a while ..
     proxy_src_list = p.get()
 
-Instantiation of the `ProxyGet` class will launch threads that perform retrieval 
-and testing. If the threads finish running, the `get()` method will return the 
-retrieved proxy URIs; if not, the method will return an empty list. 
+Instantiation of the ``ProxyGet`` class will launch threads that perform 
+retrieval and testing. If the threads finish running, the ``get()`` method will 
+return the retrieved proxy URIs; if not, the method will return an empty list. 
 
 Development
 -----------
