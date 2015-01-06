@@ -21,16 +21,14 @@ import re
 import lxml.html
 import requests
 
-__all__ = ['checkerproxy',
+__all__ = ['freeproxylists',
+           'checkerproxy',
            'letushide',
            'freeproxylist',
            'proxy_ip_list',
            'aliveproxy',
            'cool_proxy',
            'proxynova']
-
-# Proxy sources that can't be easily accessed:
-# http://www.freeproxylists.com - uses captcha
 
 #def gatherproxy():
 #    """
@@ -39,6 +37,47 @@ __all__ = ['checkerproxy',
 #
 #    page = requests.post('http://gatherproxy.com/proxylist/anonymity/?t=Elite',
 #                         data={'Type':'elite','PageIdx':"1"})
+
+def freeproxylists():
+    """
+    http://www.freeproxylists.com
+    """
+
+    # Retrieve proxies from the list with standard HTTP ports:
+    page = requests.get('http://www.freeproxylists.com/standard.html')
+    tree = lxml.html.fromstring(page.text)
+
+    rows = tree.xpath('.//th[text()="raw proxy list"]/../..')[0].xpath('.//tr')
+    list_uris = []
+    for row in rows[1:]:
+        list_uris.append('http://www.freeproxylists.com/'+\
+                         row.xpath('.//td[1]/a/@href')[0])
+    results = []
+    for uri in list_uris:
+        page = requests.get(uri)
+        tree = lxml.html.fromstring(page.text)
+        
+        # The page loads the proxy data from a separate HTML fragment embedded
+        # in an XML file using JavaScript; to avoid the need for JavaScript, we
+        # just find the URI, grab the data, and parse it:
+        onload = tree.xpath('.//body/@onload')[0]
+        table_uri = 'http://www.freeproxylists.com/'+\
+                    re.search('loadData\(\'.+\', \'(.+)\'\);', onload).group(1)
+        page = requests.get(table_uri)
+        tree = lxml.etree.fromstring(codecs.encode(page.text, 'utf-8'))
+        table = lxml.html.fromstring(tree.xpath('//root/quote')[0].text)
+
+        rows = table.xpath('.//tr')
+        for row in rows[1:]:
+            td_list = row.xpath('.//td')
+            if len(td_list) != 2:
+                continue
+            ip = td_list[0].text_content().strip()
+            if not re.search('(\d+)\.(\d+)\.(\d+)\.(\d+)', ip):
+                continue
+            port = td_list[1].text_content().strip()
+            results.append('http://'+ip+':'+port)
+    return results
 
 def checkerproxy():
     """
