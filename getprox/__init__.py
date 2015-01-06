@@ -14,9 +14,15 @@ from .version import __version__
 import getters
 from pg import ProxyGet
 
-def current_sources():
+def sources():
     """
-    Current sources of proxies.
+    Available sources of proxies.
+
+    Returns
+    -------
+    result : list of str
+        List of available proxy retrieval functions in the `getprox.getters`
+        module.
     """
 
     return getters.__all__
@@ -34,7 +40,7 @@ def proxy_get(*sources, **kwargs):
         available proxies are returned. The total number returned may
         be less than this number.
     test : bool
-        If True, return tested proxy URIs; if False (default), 
+        If True, return tested proxy URIs; if False (default),
         return URIs without testing.
 
     Returns

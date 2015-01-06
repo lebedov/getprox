@@ -23,9 +23,9 @@ To retrieve proxies from all available sources, invoke the package as follows: :
 
 Proxies are returned in ``http://host:port`` format. By default, the proxies 
 will be tested using a simple timeout test to determine whether they are alive.  
-A list of currently supported proxy sources can be obtained via ::
+A list of supported proxy sources can be obtained via ::
 
-    proxy_src_list = getprox.current_sources()
+    proxy_src_list = getprox.sources()
 
 Proxies may also be obtained from a specific source or sources. For example: ::
 
@@ -45,11 +45,13 @@ return the retrieved proxy URIs; if not, the method will return an empty list.
 Development
 -----------
 The latest release of the package may be obtained from
-`Github <https://github.com/lebedov/getprox>`_.
+`GitHub <https://github.com/lebedov/getprox>`_.
 
 To Do
 -----
-Add support for more proxy sources.
+* Add support for more proxy sources.
+* Expose proxy selection options for specific sources.
+* Provide more robust proxy checking algorithm.
 
 Author
 ------
