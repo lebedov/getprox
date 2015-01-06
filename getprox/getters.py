@@ -215,36 +215,41 @@ def proxynova():
     http://www.proxynova.com
     """
 
-    page = requests.get('http://www.proxynova.com/proxy-server-list/country-%s' % 'us')
+    page = requests.get('http://www.proxynova.com/proxy-server-list/')
     tree = lxml.html.fromstring(page.text)
-    # country_list = [e.attrib['value'] \
-    #        for e in tree.xpath('.//select/[@name="proxy_country"]/option') \
-    #        if e.attrib.has_key('value') and e.attrib['value']]
-    results = []
-    rows = tree.xpath('.//table[@id="tbl_proxy_list"]/tbody/tr')
-    for row in rows[1:]:
-        td_list = row.xpath('.//td')
-        if len(td_list) != 7:
-            continue
-        ip = td_list[0].text_content().strip()
-        port = td_list[1].text_content().strip()
-        last_check = td_list[2].text_content().strip()
-        s = re.search('(\d+) secs', last_check)
-        if s is not None:
-            last_check = int(s.group(1))
-        else:
-            s = re.search('(\d+) min', last_check)
-            if s is not None:
-                last_check = 60*int(s.group(1))
-        alive = td_list[2].xpath('.//time/@class')[0]
-        if re.search('icon-dead', alive):
-            alive = False
-        else:
-            alive = True
-        speed = \
-            float(td_list[3].xpath('.//div[@class="progress-bar"]/@data-value')[0])
-        uptime = int(td_list[4].text_content().strip()[:-1])
+    country_list = [e.attrib['value'] \
+                    for e in tree.xpath('.//select[@name="proxy_country"]/option') \
+                    if e.attrib.has_key('value') and e.attrib['value']]
 
-        if last_check <= 300 and alive and speed >= 80 and uptime >= 80:
-            results.append('http://'+ip+':'+port)
+    results = []
+    for c in country_list:
+        page = \
+            requests.get('http://www.proxynova.com/proxy-server-list/country-%s' % c)
+        tree = lxml.html.fromstring(page.text)
+        rows = tree.xpath('.//table[@id="tbl_proxy_list"]/tbody/tr')
+        for row in rows[1:]:
+            td_list = row.xpath('.//td')
+            if len(td_list) != 7:
+                continue
+            ip = td_list[0].text_content().strip()
+            port = td_list[1].text_content().strip()
+            last_check = td_list[2].text_content().strip()
+            s = re.search('(\d+) secs', last_check)
+            if s is not None:
+                last_check = int(s.group(1))
+            else:
+                s = re.search('(\d+) min', last_check)
+                if s is not None:
+                    last_check = 60*int(s.group(1))
+            alive = td_list[2].xpath('.//time/@class')[0]
+            if re.search('icon-dead', alive):
+                alive = False
+            else:
+                alive = True
+            speed = \
+                float(td_list[3].xpath('.//div[@class="progress-bar"]/@data-value')[0])
+            uptime = int(td_list[4].text_content().strip()[:-1])
+
+            if last_check <= 300 and alive and speed >= 80 and uptime >= 80:
+                results.append('http://'+ip+':'+port)
     return results
