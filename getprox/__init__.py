@@ -4,7 +4,7 @@
 Python library for retrieving free HTTP proxies from online sources.
 """
 
-# Copyright (c) 2014, Lev Givon
+# Copyright (c) 2014-2015, Lev Givon
 # All rights reserved.
 # Distributed under the terms of the BSD license:
 # http://www.opensource.org/licenses/bsd-license

@@ -1,8 +1,13 @@
 #!/usr/bin/env python
 
 """
-Proxy pool.
+Proxy retrieval class.
 """
+
+# Copyright (c) 2014-2015, Lev Givon
+# All rights reserved.
+# Distributed under the terms of the BSD license:
+# http://www.opensource.org/licenses/bsd-license
 
 import numbers
 import Queue

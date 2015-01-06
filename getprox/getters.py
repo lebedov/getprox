@@ -9,6 +9,11 @@ All retrieval functions must be listed in `__all__` in order to be exposed to
 the rest of the package.
 """
 
+# Copyright (c) 2014-2015, Lev Givon
+# All rights reserved.
+# Distributed under the terms of the BSD license:
+# http://www.opensource.org/licenses/bsd-license
+
 import base64
 import codecs
 import re
