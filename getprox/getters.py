@@ -28,7 +28,8 @@ __all__ = ['freeproxylists',
            'proxy_ip_list',
            'aliveproxy',
            'cool_proxy',
-           'proxynova']
+           'proxynova',
+           'proxyhttp']
 
 #def gatherproxy():
 #    """
@@ -291,4 +292,41 @@ def proxynova():
 
             if last_check <= 300 and alive and speed >= 80 and uptime >= 80:
                 results.append('http://'+ip+':'+port)
+    return results
+
+def proxyhttp():
+    """
+    http://proxyhttp.net
+    """
+
+    # Need to use real user agent to access site:
+    headers = {'User-Agent': 'Mozilla/5.0 (X11; OpenBSD amd64; rv:28.0) Gecko/20100101 Firefox/28.0'}
+    results = []
+    for i in xrange(1, 10):
+        page = \
+            requests.get('http://proxyhttp.net/free-list/anonymous-server-hide-ip-address/%s' % i, headers=headers)
+        tree = lxml.html.fromstring(page.text)
+
+        # Get variables used for obfuscation and evaluate them in the current
+        # namespace (the ^ operator is XOR in both JavaScript and Python):
+        s = tree.xpath('.//script[contains(text(),"<![CDATA")]')[0].text.replace('\n','').replace(' ', '').replace('//','')
+        s = re.search('CDATA\[(.*)\]\]',s).group(1)
+        exec(s)
+
+        rows = tree.xpath('.//table[@class="proxytbl"]/tr')[1:]
+        for row in rows:
+            td_list = row.xpath('.//td')
+            ip = td_list[0].text_content().strip()
+
+            # Deobfuscate port info:
+            s = td_list[1].text_content().replace('\n', '').replace(' ', '').replace('//', '')
+            s = re.search('CDATA\[document\.write\((.*)\)\;\]\]', s).group(1)
+            port = str(eval(s))
+
+            checked = td_list[5].text_content().strip()
+            h, m, s = re.search('(\d+):(\d+):(\d+)', checked).groups()
+            checked = 360*int(h)+60*int(m)+int(s)
+            if checked >= 300:
+                continue
+            results.append('http://'+ip+':'+port)
     return results
