@@ -17,9 +17,9 @@ The package may be installed as follows: ::
 Retrieval of proxies from certain online sites requires the following extra
 packages:
 
-* `PyExecJS <https://github.com/doloopwhile/PyExecJS>`_
-* a JavaScript backend such as `Node.js <http://nodejs.org>`_ or `PhantomJS
-<http://phantomjs.org>`_ 
+* `PyExecJS <https://github.com/doloopwhile/PyExecJS>`_;
+* a JavaScript backend such as `Node.js <http://nodejs.org>`_ or 
+  `PhantomJS <http://phantomjs.org>`_.
 
 If the latter dependencies are not available, the proxy sites that 
 require them are automatically disabled.
