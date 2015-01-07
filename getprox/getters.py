@@ -17,6 +17,7 @@ the rest of the package.
 import base64
 import codecs
 import re
+import urllib
 
 import lxml.html
 import requests
@@ -330,3 +331,51 @@ def proxyhttp():
                 continue
             results.append('http://'+ip+':'+port)
     return results
+
+try:
+    import execjs
+except:
+    pass
+else:
+    if execjs.available_runtimes():    
+        def samair():
+            """
+            http://www.samair.ru/proxy
+            """
+
+            base_uri = 'http://www.samair.ru/proxy/'
+            page = requests.get(base_uri)
+            tree = lxml.html.fromstring(page.text)
+
+            js_uri = urllib.basejoin(base_uri,
+                                     tree.xpath('.//script[@type="text/javascript"]/@src')[0])
+            js_vars = re.search('eval\((.*)\)', requests.get(js_uri).text.strip()).group(1)
+            js_vars = execjs.eval(js_vars)
+
+            uri_list = [base_uri]+[urllib.basejoin(base_uri, u) \
+                        for u in tree.xpath('.//a[@class="page"]/@href')]
+            results = []
+            for uri in uri_list:
+                page = requests.get(base_uri)
+                tree = lxml.html.fromstring(page.text)
+                rows = tree.xpath('.//table[@id="proxylist"]/tr')[1:]
+                for row in rows:
+                    td_list = row.xpath('.//td')
+                    if len(td_list) != 4:
+                        continue
+                    ip = td_list[0].text
+
+                    # Get the JavaScript that corresponds to the obfuscated port:
+                    port_js = td_list[0].xpath('.//script')[0].text
+                    port_js = re.search('document\.write\(\":\"\+(.+)\)', port_js).group(1)
+                    port_vars = port_js.split('+')
+                    p = '+'.join(['(%s).toString()' % v for v in port_vars])
+
+                    # Construct function to interpret to get the actual port value:
+                    f = 'function(){'+js_vars+'return '+p+'}()'
+                    port = str(execjs.eval(f))
+
+                    results.append('http://'+ip+':'+port)
+            return results
+
+        __all__.append('samair')

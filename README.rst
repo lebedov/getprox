@@ -14,6 +14,16 @@ The package may be installed as follows: ::
 
     pip install getprox
 
+Retrieval of proxies from certain online sites requires the following extra
+packages:
+
+* `PyExecJS <https://github.com/doloopwhile/PyExecJS>`_
+* a JavaScript backend such as `Node.js <http://nodejs.org>`_ or `PhantomJS
+<http://phantomjs.org>`_ 
+
+If the latter dependencies are not available, the proxy sites that 
+require them are automatically disabled.
+
 Usage Examples
 --------------
 To retrieve proxies from all available sources, invoke the package as follows: ::
