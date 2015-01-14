@@ -17,7 +17,9 @@ the rest of the package.
 import base64
 import codecs
 import re
+import StringIO
 import urllib
+import zipfile
 
 import lxml.html
 import requests
@@ -157,13 +159,25 @@ def freeproxylist():
     """
 
     # Get URI of most recent list:
-    page = requests.get('http://freeproxylist.co')
+    try:
+        page = requests.get('http://freeproxylist.co')
+    except:
+        return []
     tree = lxml.html.fromstring(page.text)
     uri = tree.xpath('.//div[@class="entry_date"]')[0].xpath('.//a/@href')[0]
-    page = requests.get(uri)
+    try:
+        page = requests.get(uri)
+    except:
+        return []
     tree = lxml.html.fromstring(page.text)
-    data = tree.xpath('.//div[@class="entry_content"]')[0].text_content().strip()
-    return ['http://'+u for u in data.split('\n')]
+    zip_uri = tree.xpath('.//div[@class="entry_page"]/p/a/@href')[0].strip()
+    try:
+        r = requests.get(zip_uri)
+    except:
+        return []
+    z = zipfile.ZipFile(StringIO.StringIO(r.content))
+    data = z.read(z.namelist()[0])
+    return ['http://'+u.strip() for u in data.split('\n')]
 
 def proxy_ip_list():
     """
