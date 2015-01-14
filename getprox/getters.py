@@ -324,7 +324,10 @@ def proxyhttp():
 
         # Get variables used for obfuscation and evaluate them in the current
         # namespace (the ^ operator is XOR in both JavaScript and Python):
-        s = tree.xpath('.//script[contains(text(),"<![CDATA")]')[0].text.replace('\n','').replace(' ', '').replace('//','')
+        try:
+            s = tree.xpath('.//script[contains(text(),"<![CDATA")]')[0].text.replace('\n','').replace(' ', '').replace('//','')
+        except:
+            continue
         s = re.search('CDATA\[(.*)\]\]',s).group(1)
         exec(s)
 
