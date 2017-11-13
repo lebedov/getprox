@@ -12,7 +12,7 @@ Proxy retrieval class.
 import numbers
 import Queue
 
-import futures
+from concurrent import futures
 import requests
 import requests_futures.sessions
 
